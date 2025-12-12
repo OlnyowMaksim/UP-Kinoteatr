@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinochrome - Ваш билет в мир кино</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        /* eslint-disable */
+        window.USER_IS_AUTH = JSON.parse("{{ user.is_authenticated|yesno:'true,false'|escapejs }}");
+        window.USER_NAME = "{{ user.username|default:''|escapejs }}";
+
+        function getCsrfToken() {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta && meta.content) return meta.content;
+            const name = 'csrftoken';
+            const cookies = document.cookie ? document.cookie.split('; ') : [];
+            for (let cookie of cookies) {
+                if (cookie.startsWith(name + '=')) {
+                    return decodeURIComponent(cookie.slice(name.length + 1));
+                }
+            }
+            return '';
+        }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            DEFAULT: '#FF9500', // Оранжевый
+                            hover: '#E68600',
+                            light: '#FFF9F0',
+                            bg: '#F9FAFB'
+                        },
+                        dark: {
+                            DEFAULT: '#111827',
+                            footer: '#1A1A1A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <div onclick="router('home')" class="cursor-pointer text-2xl font-semibold text-brand tracking-tight">
+                Kinochrome
+            </div>
+
+            <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-500">
+                <a href="#" onclick="router('home')" class="hover:text-brand transition">Возможности</a>
+                <a href="#" onclick="router('films')" class="hover:text-brand transition">Фильмы</a>
+                <a href="#" onclick="router('schedule')" class="hover:text-brand transition">Расписание</a>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <div id="current-time" class="hidden md:block text-sm text-gray-500 font-medium"></div>
+                <button id="nav-profile-btn" onclick="handleProfileNav()" class="hidden md:block text-sm font-medium text-gray-700 hover:text-brand transition">
+                    {% if user.is_authenticated %}{{ user.username|default:'Профиль' }}{% else %}Профиль{% endif %}
+                </button>
+                {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="bg-brand text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-brand-dark transition shadow-lg shadow-orange-200">
+                    Выйти
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}" class="bg-brand text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-brand-dark transition shadow-lg shadow-orange-200">
+                    Войти
+                </a>
+                <a href="{% url 'register' %}" class="hidden md:block text-sm font-medium text-gray-500 hover:text-brand">
+                    Регистрация
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main id="app" class="flex-grow">
+        </main>
+
+    <footer class="bg-dark-footer text-gray-400 py-12 mt-auto">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 border-b border-gray-800 pb-12">
+                <div>
+                    <h3 class="text-brand text-xl font-semibold mb-4">Kinochrome</h3>
+                    <p class="text-sm leading-relaxed">Современный кинотеатр с лучшими фильмами и премиальным качеством.</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-medium mb-4">Навигация</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" onclick="router('home')" class="hover:text-brand">Возможности</a></li>
+                        <li><a href="#" onclick="router('films')" class="hover:text-brand">Фильмы</a></li>
+                        <li><a href="#" onclick="router('schedule')" class="hover:text-brand">Расписание</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-medium mb-4">Компания</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-brand">О нас</a></li>
+                        <li><a href="#" onclick="router('help')" class="hover:text-brand">Контакты</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-medium mb-4">Поддержка</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" onclick="router('help')" class="hover:text-brand">Помощь</a></li>
+                        <li><a href="#" onclick="router('faq')" class="hover:text-brand">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 text-center text-xs text-gray-600">
+                &copy; 2024 Kinochrome. Все права защищены.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function updateAuthUI(isAuth, username) {
+            const navBtn = document.getElementById('nav-profile-btn');
+            if (navBtn) {
+                navBtn.textContent = isAuth ? (username || 'Профиль') : 'Профиль';
+            }
+            window.USER_IS_AUTH = isAuth;
+            window.USER_NAME = username || '';
+        }
+
+        function handleProfileNav() {
+            if (!window.USER_IS_AUTH) {
+                window.location.href = "{% url 'login' %}?next={% url 'spa' %}";
+            } else {
+                router('profile');
+            }
+        }
+
+        async function loadProfile() {
+    try {
+        const resp = await fetch('/api/user/', { credentials: 'same-origin' });
+        
+        // --- 1. Если пользователь не авторизован ---
+        if (!resp.ok) {
+            updateAuthUI(false, '');
+            document.getElementById('profile-name').innerText = "Гость";
+            document.getElementById('profile-email').innerText = "";
+            document.getElementById('profile-tickets').innerHTML = `
+                <div class="text-gray-500">
+                    Пожалуйста, войдите чтобы увидеть свои билеты.
+                </div>`;
+            return;
+        }
+
+        // --- 2. Пользователь авторизован ---
+        const data = await resp.json();
+        updateAuthUI(true, data.username);
+
+        const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+
+        const nameEl = document.getElementById('profile-name');
+        nameEl.innerText = fullName || data.username;
+
+        document.getElementById('profile-email').innerText =
+            data.email || "";
+
+        // Роль
+        const roleEl = document.getElementById('profile-role');
+        if (data.is_staff) {
+            roleEl.classList.remove('hidden');
+            roleEl.innerText = 'Администратор';
+            nameEl.classList.add('text-brand');
+        } else {
+            roleEl.classList.add('hidden');
+            roleEl.innerText = '';
+            nameEl.classList.remove('text-brand');
+        }
+
+        const initials = (fullName || data.username || '??')
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w[0])
+            .join('')
+            .slice(0,2)
+            .toUpperCase();
+        const avatar = document.getElementById('profile-avatar');
+        if (avatar) avatar.innerText = initials || 'П';
+
+        // --- 3. Билеты ---
+        const wrap = document.getElementById('profile-tickets');
+        const tickets = data.bookings;
+
+        if (!tickets.length) {
+            wrap.innerHTML = `<div class="text-gray-500">Пока нет бронирований.</div>`;
+            return;
+        }
+
+        wrap.innerHTML = tickets
+            .map(
+                t => `
+            <div class="bg-gradient-to-br from-white to-[#fff7ec] rounded-2xl border border-orange-100 p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-1">
+                    <div class="font-semibold text-lg text-gray-900">${t.movie}</div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-3 text-gray-700">
+                        <div><p class="text-gray-400 text-xs uppercase tracking-wide">Дата</p><p>${t.session_time}</p></div>
+                        <div><p class="text-gray-400 text-xs uppercase tracking-wide">Кол-во</p><p>${t.quantity}</p></div>
+                        <div><p class="text-gray-400 text-xs uppercase tracking-wide">Сумма</p><p class="font-semibold">${t.total_price} ₽</p></div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-start gap-2">
+                    <p class="text-xs text-gray-400 uppercase tracking-wide">Код билета</p>
+                    <div class="bg-[#0f172a] text-white font-mono text-sm px-4 py-2 rounded-lg shadow-md">
+                        ${t.qr || ('KINO-' + btoa(String(t.id)).replace(/=/g,'').slice(0,8))}
+                    </div>
+                </div>
+            </div>
+            `
+            )
+            .join("");
+    } catch (err) {
+        console.error(err);
+        updateAuthUI(false, '');
+    }
+}
+
+        // --- 1. ДАННЫЕ --- (грузим с сервера)
+        let moviesData = [];
+
+        // Дни для расписания (реальные, МСК)
+        function getMoscowDate(offset = 0) {
+            const now = new Date();
+            const mskString = now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' });
+            const mskDate = new Date(mskString);
+            mskDate.setDate(mskDate.getDate() + offset);
+            return mskDate;
+        }
+
+        function formatDay(offset = 0) {
+            return getMoscowDate(offset).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+        }
+
+        function getNextSession(movieTimes) {
+            const now = getMoscowDate(0);
+            const todayStr = formatDay(0);
+            for (const t of movieTimes) {
+                const [h, m] = t.split(':').map(Number);
+                const candidate = new Date(getMoscowDate(0));
+                candidate.setHours(h, m, 0, 0);
+                if (candidate > now) {
+                    return { time: t, date: todayStr };
+                }
+            }
+            // если все времена прошли, берем первое на завтра
+            return { time: movieTimes[0], date: formatDay(1) };
+        }
+
+        const scheduleDays = [
+            { id: 0, label: "Сегодня", date: formatDay(0) },
+            { id: 1, label: "Завтра", date: formatDay(1) },
+            { id: 2, label: "Послезавтра", date: formatDay(2) },
+            { id: 3, label: "Через 3 дня", date: formatDay(3) },
+            { id: 4, label: "Через 4 дня", date: formatDay(4) },
+        ];
+
+        // Глобальное состояние
+        let currentBooking = {
+            movieTitle: "Не выбран",
+            date: formatDay(0),
+            time: "--:--",
+            price: 400
+        };
+
+        async function loadMovies() {
+            try {
+                const resp = await fetch('/api/movies/');
+                const data = await resp.json();
+                moviesData = (data || []).map(m => {
+                    // Преобразуем sessions в массив времен
+                    const times = (m.sessions || []).map(s => {
+                        const dt = new Date(s.start_time);
+                        const mskString = dt.toLocaleString('en-US', { timeZone: 'Europe/Moscow' });
+                        const mskDate = new Date(mskString);
+                        const hours = String(mskDate.getHours()).padStart(2, '0');
+                        const minutes = String(mskDate.getMinutes()).padStart(2, '0');
+                        return `${hours}:${minutes}`;
+                    });
+                    
+                    return {
+                        id: m.id,
+                        title: m.title,
+                        genre: m.genre?.name || '—',
+                        rating: m.rating || '—',
+                        year: m.year || getMoscowDate(0).getFullYear(),
+                        duration: m.duration_minutes ? `${m.duration_minutes} мин` : '',
+                        img: m.poster_url || '',
+                        times: times
+                    };
+                });
+            } catch (e) {
+                console.error('movies load error', e);
+                moviesData = [];
+            }
+        }
+
+        // --- 2. ШАБЛОНЫ СТРАНИЦ ---
+        const pages = {
+            home: `
+                <section class="bg-brand relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-400"></div>
+                    <div class="container mx-auto px-6 py-24 md:py-32 relative z-10 text-center text-white">
+                        <h1 class="text-4xl md:text-6xl font-medium mb-6">Готовы к незабываемому вечеру?</h1>
+                        <p class="text-lg md:text-xl opacity-90 mb-10 max-w-2xl mx-auto">Присоединяйтесь к тысячам зрителей, которые уже выбрали Kinochrome.</p>
+                        <button onclick="router('schedule')" class="bg-white text-brand px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-xl transition transform hover:-translate-y-1">
+                            Посмотреть расписание
+                        </button>
+                    </div>
+                </section>
+
+                <section class="py-20 bg-gray-50">
+                    <div class="container mx-auto px-6 text-center mb-12">
+                        <h2 class="text-3xl font-semibold text-gray-900">Почему выбирают Kinochrome</h2>
+                        <p class="text-gray-500 mt-2">Всё для вашего комфорта и удовольствия</p>
+                    </div>
+                    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
+                            <div class="w-12 h-12 bg-brand text-white flex items-center justify-center rounded-xl text-xl font-bold mb-6">1</div>
+                            <h3 class="text-xl font-semibold mb-3">Выбирайте лучшие места</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">Интерактивная схема зала показывает все свободные места.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
+                            <div class="w-12 h-12 bg-brand text-white flex items-center justify-center rounded-xl text-xl font-bold mb-6">2</div>
+                            <h3 class="text-xl font-semibold mb-3">Бронируйте за минуту</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">Простой процесс: выбрали фильм, время, места - готово! Билет на почте.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
+                            <div class="w-12 h-12 bg-brand text-white flex items-center justify-center rounded-xl text-xl font-bold mb-6">3</div>
+                            <h3 class="text-xl font-semibold mb-3">Премиальное качество</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">4K проекция, звук Dolby Atmos и комфортные кресла для полного погружения.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition">
+                            <div class="w-12 h-12 bg-brand text-white flex items-center justify-center rounded-xl text-xl font-bold mb-6">4</div>
+                            <h3 class="text-xl font-semibold mb-3">Всегда актуальная афиша</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">Все новинки и премьеры. Обновляем расписание каждый день.</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <section class="py-16 bg-white">
+                    <div class="container mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                        <div><div class="text-3xl font-bold text-brand mb-2">50K+</div><div class="text-xs uppercase tracking-wide text-gray-400">Зрителей</div></div>
+                        <div><div class="text-3xl font-bold text-brand mb-2">8</div><div class="text-xs uppercase tracking-wide text-gray-400">Залов Dolby Atmos</div></div>
+                        <div><div class="text-3xl font-bold text-brand mb-2">24/7</div><div class="text-xs uppercase tracking-wide text-gray-400">Онлайн</div></div>
+                        <div><div class="text-3xl font-bold text-brand mb-2">250+</div><div class="text-xs uppercase tracking-wide text-gray-400">Сеансов</div></div>
+                    </div>
+                </section>
+            `,
+
+            films: `
+                <div class="container mx-auto px-6 py-10 fade-in">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-semibold text-gray-900">Все фильмы</h2>
+                            <p class="text-gray-500 text-sm mt-1">Выберите жанр для фильтрации</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 flex space-x-2 overflow-x-auto no-scrollbar pb-2" id="genre-buttons"></div>
+                    </div>
+                    <div id="movies-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+                </div>
+            `,
+
+            // СТРАНИЦА РАСПИСАНИЯ
+            schedule: `
+                <div class="container mx-auto px-6 py-10 fade-in">
+                    <h2 class="text-3xl font-semibold text-gray-900 mb-6">Расписание сеансов</h2>
+                    
+                    <div class="flex space-x-3 overflow-x-auto no-scrollbar mb-8 pb-2" id="schedule-days-container"></div>
+
+                    <div id="schedule-list" class="space-y-6"></div>
+                </div>
+            `,
+
+            // FAQ (НОВАЯ)
+            faq: `
+                <div class="container mx-auto px-6 py-12 fade-in max-w-4xl">
+                    <h2 class="text-3xl font-bold mb-2 text-center">Часто задаваемые вопросы</h2>
+                    <p class="text-gray-500 text-center mb-10">Ответы на самые популярные вопросы зрителей</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2">Как вернуть билет?</h3>
+                            <p class="text-gray-600 text-sm">Вы можете вернуть билет не позднее, чем за 30 минут до начала сеанса через личный кабинет. Средства вернутся на карту в течение 3-5 дней.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2">Нужно ли распечатывать электронный билет?</h3>
+                            <p class="text-gray-600 text-sm">Нет, достаточно показать QR-код билета с экрана смартфона контролеру при входе в зал.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2">Есть ли скидки для студентов и пенсионеров?</h3>
+                            <p class="text-gray-600 text-sm">Да, скидка 15% действует на сеансы до 17:00 по будням при предъявлении соответствующего документа.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2">Где можно припарковаться?</h3>
+                            <p class="text-gray-600 text-sm">Для гостей кинотеатра доступна бесплатная подземная парковка ТЦ (первые 3 часа). Въезд со стороны главной улицы.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <p class="text-gray-500 text-sm">Не нашли ответ?</p>
+                        <button onclick="router('help')" class="text-brand font-medium hover:underline mt-1">Написать в поддержку</button>
+                    </div>
+                </div>
+            `,
+
+            // ПОМОЩЬ (НОВАЯ)
+            help: `
+                <div class="container mx-auto px-6 py-12 fade-in max-w-2xl">
+                    <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+                        <h2 class="text-2xl font-bold mb-2">Служба поддержки</h2>
+                        <p class="text-gray-500 text-sm mb-6">Мы всегда готовы помочь вам с любым вопросом</p>
+
+                        <form onsubmit="event.preventDefault(); alert('Сообщение отправлено!'); router('home');">
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Тема обращения</label>
+                                <select class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand bg-white">
+                                    <option>Проблема с оплатой</option>
+                                    <option>Возврат билета</option>
+                                    <option>Забытые вещи</option>
+                                    <option>Другое</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Email для связи</label>
+                                <input type="email" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Сообщение</label>
+                                <textarea rows="4" placeholder="Опишите вашу проблему..." class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand"></textarea>
+                            </div>
+                            <button class="w-full bg-brand text-white py-3.5 rounded-xl font-bold hover:bg-brand-hover shadow-lg">Отправить</button>
+                        </form>
+
+                        <div class="mt-8 pt-8 border-t border-gray-100">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-brand font-bold">📞</div>
+                                <div>
+                                    <p class="text-xs text-gray-400">Горячая линия</p>
+                                    <p class="font-bold">8 (800) 555-35-35</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-brand font-bold">✉️</div>
+                                <div>
+                                    <p class="text-xs text-gray-400">Email</p>
+                                    <p class="font-bold">support@kinochrome.ru</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            // БРОНИРОВАНИЕ
+            booking: `
+                <div class="container mx-auto px-6 py-10 fade-in h-full">
+                    <div class="flex flex-col lg:flex-row gap-8">
+                        <div class="flex-grow">
+                            <button onclick="router('schedule')" class="text-gray-400 text-sm mb-4 hover:text-brand">← Вернуться к расписанию</button>
+                            <h2 class="text-2xl font-semibold mb-6">Выбор мест: <span id="booking-movie-title" class="text-brand"></span></h2>
+                            
+                            <div class="flex justify-center space-x-6 mb-8 text-sm">
+                                <div class="flex items-center"><div class="w-4 h-4 rounded border border-gray-200 mr-2"></div> Свободно</div>
+                                <div class="flex items-center"><div class="w-4 h-4 rounded bg-brand mr-2"></div> Выбрано</div>
+                                <div class="flex items-center"><div class="w-4 h-4 rounded bg-gray-300 mr-2"></div> Занято</div>
+                            </div>
+
+                            <div class="mb-10 relative flex justify-center">
+                                <div class="w-2/3 h-2 bg-brand rounded-full shadow-[0_4px_20px_rgba(255,149,0,0.5)]"></div>
+                                <div class="absolute top-4 text-xs tracking-[0.5em] text-gray-400">ЭКРАН</div>
+                            </div>
+
+                            <div class="bg-white p-8 rounded-3xl mb-8 flex flex-col gap-3 items-center shadow-sm border border-gray-100" id="seat-grid"></div>
+
+                             <h2 class="text-xl font-semibold mb-4 mt-8">Ваши данные</h2>
+                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div class="space-y-4">
+                                    <input type="text" placeholder="Ваше имя" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-brand">
+                                    <input type="email" placeholder="your@email.com" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-brand">
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="w-full lg:w-96">
+                            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 sticky top-24">
+                                <h3 class="text-lg font-semibold mb-6">Билет</h3>
+                                <div class="space-y-4 text-sm mb-6 border-b border-gray-100 pb-6">
+                                    <div class="flex justify-between"><span class="text-gray-500">Фильм</span><span class="font-medium text-right w-1/2 truncate" id="summary-title">...</span></div>
+                                    <div class="flex justify-between"><span class="text-gray-500">Дата</span><span class="font-medium" id="summary-date">...</span></div>
+                                    <div class="flex justify-between"><span class="text-gray-500">Время</span><span class="font-medium" id="summary-time">...</span></div>
+                                     <div class="flex justify-between"><span class="text-gray-500">Места</span><span class="font-medium" id="selected-seats-text">Не выбраны</span></div>
+                                </div>
+                                <div class="flex justify-between items-center mb-6">
+                                    <span class="text-lg font-semibold">Итого</span>
+                                    <span class="text-xl font-bold text-brand" id="total-price">0 ₽</span>
+                                </div>
+                                <button id="booking-submit-btn" onclick="completeBooking()" class="w-full bg-brand text-white py-3 rounded-xl font-medium hover:bg-brand-hover transition shadow-lg shadow-orange-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Оплатить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            profile: `
+                <div class="container mx-auto px-6 py-10 fade-in">
+                    <div class="bg-white rounded-2xl p-8 mb-8 border border-gray-100 flex flex-col md:flex-row md:items-center justify-between shadow-sm">
+                        <div class="flex items-center mb-4 md:mb-0">
+                            <div class="w-16 h-16 bg-brand rounded-full flex items-center justify-center text-white text-2xl font-bold mr-6" id="profile-avatar">ИИ</div>
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <h2 class="text-2xl font-bold text-gray-900" id="profile-name">Гость</h2>
+                                    <span id="profile-role" class="hidden admin-badge">Администратор</span>
+                                </div>
+                                <p class="text-gray-500 text-sm" id="profile-email"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <a href="{% url 'logout' %}" class="text-sm text-gray-500 hover:text-brand">Выйти</a>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold mb-4">Мои билеты</h3>
+                    <div id="profile-tickets" class="space-y-4">
+                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm text-gray-500">
+                            Пожалуйста, войдите чтобы увидеть свои билеты.
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            login: `
+                <div class="container mx-auto px-6 py-16 flex justify-center items-center fade-in">
+                    <div class="bg-brand-light p-8 md:p-12 rounded-3xl w-full max-w-lg shadow-xl relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-200 rounded-full opacity-50 blur-xl"></div>
+                        <h2 class="text-3xl font-bold mb-2">Вход</h2>
+                        <form onsubmit="event.preventDefault(); router('profile');">
+                            <input type="email" placeholder="Email" class="w-full mb-4 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand">
+                            <input type="password" placeholder="Пароль" class="w-full mb-6 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand">
+                            <button class="w-full bg-brand text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-hover shadow-lg">Войти</button>
+                        </form>
+                        <div class="mt-6 text-center text-sm text-gray-500">
+                            Нет аккаунта? <a href="#" onclick="router('register')" class="text-brand font-bold hover:underline">Регистрация</a>
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            // РЕГИСТРАЦИЯ (ОБНОВЛЕННАЯ С ТЕЛЕФОНОМ)
+            register: `
+                <div class="container mx-auto px-6 py-10 flex justify-center items-center fade-in">
+                    <div class="bg-white p-8 md:p-10 rounded-3xl w-full max-w-2xl shadow-xl border border-gray-100 relative">
+                         <h2 class="text-3xl font-bold mb-2 text-center">Создать аккаунт</h2>
+                         <p class="text-gray-500 text-sm mb-8 text-center">Заполните данные для регистрации</p>
+
+                         <form onsubmit="event.preventDefault(); router('profile');" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-2">Имя</label>
+                                    <input type="text" placeholder="Иван" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-2">Фамилия</label>
+                                    <input type="text" placeholder="Иванов" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand transition">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Email</label>
+                                <input type="email" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand transition">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Телефон</label>
+                                <input type="tel" placeholder="+7 (900) 123-45-67" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand transition">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-2">Пароль</label>
+                                    <input type="password" placeholder="Мин. 8 символов" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-2">Повторите пароль</label>
+                                    <input type="password" placeholder="Повторите пароль" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand transition">
+                                </div>
+                            </div>
+
+                            <div class="flex items-start mb-6 pt-2">
+                                <input id="terms" type="checkbox" class="mt-1 mr-3 text-brand focus:ring-brand rounded border-gray-300">
+                                <label for="terms" class="text-xs text-gray-500 leading-relaxed">
+                                    Я согласен с <a href="#" class="text-brand hover:underline">Условиями</a>.
+                                </label>
+                            </div>
+
+                            <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-hover transition shadow-lg shadow-orange-200">
+                                Зарегистрироваться
+                            </button>
+                         </form>
+
+                         <div class="mt-6 text-center text-sm text-gray-500">
+                            Уже есть аккаунт? <a href="#" onclick="router('login')" class="text-brand font-bold hover:underline">Войти</a>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        // --- 3. ЛОГИКА ---
+        
+        async function router(route) {
+            const app = document.getElementById('app');
+            if (!pages[route]) route = 'home';
+
+            // При заходе на фильмы/расписание — подгружаем данные из API
+            if ((route === 'films' || route === 'schedule') && moviesData.length === 0) {
+                await loadMovies();
+            }
+
+            app.innerHTML = pages[route];
+            window.scrollTo(0, 0);
+
+            if (route === 'booking') initBookingPage();
+            if (route === 'films') initFilms('Все');
+            if (route === 'schedule') initSchedule(0); // По умолчанию открываем первый день
+            if (route === 'profile') {
+                if (!window.USER_IS_AUTH) {
+                    window.location.href = "{% url 'login' %}?next={% url 'spa' %}";
+                    return;
+                }
+                loadProfile();
+            }
+        }
+
+        // --- СТАРТ БРОНИРОВАНИЯ ---
+        function startBooking(movieTitle, time, date) {
+            if (!window.USER_IS_AUTH) {
+                window.location.href = "{% url 'login' %}?next={% url 'spa' %}";
+                return;
+            }
+            currentBooking = {
+                movieTitle: movieTitle,
+                date: date,
+                time: time,
+                price: 400
+            };
+            router('booking');
+        }
+
+        // --- ЛОГИКА БРОНИРОВАНИЯ ---
+        let selectedSeats = [];
+
+        function initBookingPage() {
+            document.getElementById('booking-movie-title').innerText = currentBooking.movieTitle;
+            document.getElementById('summary-title').innerText = currentBooking.movieTitle;
+            document.getElementById('summary-date').innerText = currentBooking.date;
+            document.getElementById('summary-time').innerText = currentBooking.time;
+            initSeats();
+        }
+
+        function initSeats() {
+            const grid = document.getElementById('seat-grid');
+            if(!grid) return;
+            selectedSeats = [];
+            
+            let seatsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                seatsHtml += `<div class="flex gap-2 mb-2"><div class="w-8 h-8 flex items-center justify-center text-xs text-gray-300 mr-2">${i}</div>`;
+                for (let j = 1; j <= 8; j++) {
+                    const isTaken = Math.random() > 0.8; 
+                    const onclick = isTaken ? '' : `onclick="toggleSeat(this, ${i}, ${j})"`;
+                    seatsHtml += `<div ${onclick} class="w-8 h-8 rounded-lg transition-all duration-200 ${isTaken ? 'bg-gray-300 cursor-not-allowed' : 'bg-white border border-gray-200 hover:border-brand cursor-pointer hover:shadow-md'}"></div>`;
+                }
+                seatsHtml += `</div>`;
+            }
+            grid.innerHTML = seatsHtml;
+            updateSummary();
+        }
+
+        window.toggleSeat = function(el, r, c) {
+            if (el.classList.contains('bg-brand')) {
+                el.classList.remove('bg-brand', 'border-brand', 'text-white');
+                el.classList.add('bg-white', 'border-gray-200');
+                selectedSeats = selectedSeats.filter(s => s.r !== r || s.c !== c);
+            } else {
+                el.classList.remove('bg-white', 'border-gray-200');
+                el.classList.add('bg-brand', 'border-brand', 'text-white');
+                selectedSeats.push({r, c});
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const count = selectedSeats.length;
+            document.getElementById('total-price').innerText = `${count * currentBooking.price} ₽`;
+            
+            const textEl = document.getElementById('selected-seats-text');
+            if (count === 0) textEl.innerText = "Не выбраны";
+            else {
+                selectedSeats.sort((a,b) => (a.r - b.r) || (a.c - b.c));
+                textEl.innerText = selectedSeats.map(s => `Р${s.r}М${s.c}`).join(', ');
+            }
+        }
+
+        async function completeBooking() {
+            if (!window.USER_IS_AUTH) {
+                window.location.href = "{% url 'login' %}?next={% url 'spa' %}";
+                return;
+            }
+            if (selectedSeats.length === 0) {
+                alert('Выберите хотя бы одно место.');
+                return;
+            }
+            
+            // Блокируем кнопку во время отправки
+            const btn = document.getElementById('booking-submit-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Обработка...';
+            }
+            
+            try {
+                const resp = await fetch('/api/booking/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken(),
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        movie_title: currentBooking.movieTitle,
+                        seats: selectedSeats,
+                    })
+                });
+                
+                if (resp.status === 401) {
+                    window.location.href = "{% url 'login' %}?next={% url 'spa' %}";
+                    return;
+                }
+                
+                const data = await resp.json();
+                
+                if (!resp.ok) {
+                    const errorMsg = data.detail || data.error || 'Не удалось сохранить бронирование';
+                    throw new Error(errorMsg);
+                }
+                
+                alert('Бронирование сохранено!');
+                router('profile');
+                loadProfile();
+            } catch (e) {
+                console.error('Booking error:', e);
+                const errorMsg = e.message || 'Ошибка при бронировании. Попробуйте ещё раз.';
+                alert(errorMsg);
+            } finally {
+                // Разблокируем кнопку
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Оплатить';
+                }
+            }
+        }
+
+        // --- ЛОГИКА ФИЛЬМОВ (ФИЛЬТР) ---
+        function initFilms(category) {
+            const container = document.getElementById('movies-grid');
+            const btns = document.getElementById('genre-buttons');
+            const genres = ["Все", "Боевик", "Комедия", "Драма", "Триллер", "Фантастика"];
+
+            btns.innerHTML = genres.map(g => {
+                const active = g === category ? "bg-brand text-white border-brand" : "bg-white text-gray-600 border-gray-200 hover:border-brand";
+                return `<button onclick="initFilms('${g}')" class="px-4 py-2 border text-sm rounded-lg transition whitespace-nowrap ${active}">${g}</button>`;
+            }).join('');
+
+            const list = category === "Все" ? moviesData : moviesData.filter(m => (m.genre || '').toLowerCase() === category.toLowerCase());
+            
+            if(list.length === 0) {
+                container.innerHTML = `<div class="col-span-4 text-center py-10 text-gray-400">Ничего не найдено</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(m => {
+                const next = getNextSession(m.times);
+                return `
+                <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-lg transition flex flex-col h-full group">
+                    <div class="h-64 bg-gray-200 rounded-xl mb-4 relative overflow-hidden flex-shrink-0">
+                        <img src="${m.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-xs font-bold">★ ${m.rating}</div>
+                    </div>
+                    <h3 class="font-bold text-lg mb-1">${m.title} <span class="text-sm font-normal text-gray-500">(${m.genre})</span></h3>
+                    <div class="text-xs text-gray-400 mb-4">${m.year} • ${m.duration}</div>
+                    <button onclick="startBooking('${m.title}', '${next.time}', '${next.date}')" class="mt-auto w-full py-2.5 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-hover transition">
+                        Купить билет · ${next.date}, ${next.time}
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // --- ЛОГИКА РАСПИСАНИЯ (С ФИЛЬТРОМ ПО ДНЯМ) ---
+        function initSchedule(activeDayId = 0) {
+            const daysContainer = document.getElementById('schedule-days-container');
+            const listContainer = document.getElementById('schedule-list');
+            if(!daysContainer) return;
+
+            // 1. Рендерим кнопки дней
+            daysContainer.innerHTML = scheduleDays.map(day => {
+                const isActive = day.id === activeDayId;
+                const buttonClass = isActive 
+                    ? "bg-brand text-white shadow-lg shadow-orange-100" 
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-brand hover:text-brand";
+                
+                const labelOpacity = isActive ? "opacity-80" : "opacity-60";
+
+                return `
+                    <button onclick="initSchedule(${day.id})" class="flex-shrink-0 px-6 py-3 rounded-xl font-medium transition ${buttonClass}">
+                        <div class="text-xs ${labelOpacity}">${day.label}</div>
+                        <div class="text-lg font-bold">${day.date}</div>
+                    </button>
+                `;
+            }).join('');
+
+            // 2. Рендерим фильмы с учётом доступности по времени (МСК)
+            const selectedDateString = scheduleDays.find(d => d.id === activeDayId).date;
+            const baseDate = getMoscowDate(activeDayId);
+            const nowMsk = getMoscowDate(0);
+
+            listContainer.innerHTML = moviesData.map(m => {
+                const times = m.times.map(t => {
+                    let [h, min] = t.split(':').map(Number);
+                    const candidate = new Date(baseDate);
+                    candidate.setHours(h, min, 0, 0);
+                    const isPast = candidate <= nowMsk && baseDate.toDateString() === nowMsk.toDateString();
+                    return { time: `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`, available: !isPast };
+                });
+
+                return `
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 animate-fade">
+                        <div class="w-full md:w-32 h-48 md:h-32 rounded-xl overflow-hidden flex-shrink-0 relative">
+                             <img src="${m.img}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-900">${m.title} <span class="text-base font-normal text-gray-500">(${m.genre})</span></h3>
+                                    <p class="text-sm text-gray-400">${m.duration} • ${m.year}</p>
+                                </div>
+                                <div class="bg-orange-50 text-brand px-2 py-1 rounded text-sm font-bold">★ ${m.rating}</div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <p class="text-xs font-semibold text-gray-400 uppercase mb-3">Сеансы на ${selectedDateString}</p>
+                                <div class="flex flex-wrap gap-3">
+                                    ${times.map(tt => tt.available
+                                        ? `<button onclick="startBooking('${m.title}', '${tt.time}', '${selectedDateString}')" 
+                                                class="px-5 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-brand hover:text-white hover:border-brand transition">
+                                            ${tt.time}
+                                        </button>`
+                                        : `<span class="px-5 py-2 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 cursor-not-allowed">
+                                            ${tt.time} (недоступно)
+                                        </span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Обновление времени на сайте
+        function updateTime() {
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                const now = new Date();
+                const mskString = now.toLocaleString('ru-RU', { 
+                    timeZone: 'Europe/Moscow',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                timeEl.textContent = mskString;
+            }
+        }
+        
+        // Обновляем время каждую секунду
+        setInterval(updateTime, 1000);
+        updateTime(); // Первый вызов сразу
+
+        // Запуск
+        const params = new URLSearchParams(window.location.search);
+        const initialRoute = params.get('route') || 'home';
+        router(initialRoute);
+
+    </script>
+</body>
+</html>
+</html>

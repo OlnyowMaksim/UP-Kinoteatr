@@ -1,0 +1,70 @@
+{% extends 'theater/base.html' %}
+{% block content %}
+<div class="bg-gray-50 min-h-[calc(100vh-4rem)]">
+  <div class="container mx-auto px-6 py-12">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-gradient-to-br from-white to-[#fff4e0] rounded-3xl shadow-xl border border-orange-100 px-10 py-12">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <p class="text-sm text-gray-500">Новый аккаунт</p>
+            <h1 class="text-3xl font-semibold text-gray-900">Создайте профиль и бронируйте билеты</h1>
+          </div>
+        </div>
+
+        <form method="post" class="space-y-5">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="bg-red-50 text-red-700 px-4 py-3 rounded border border-red-100">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Имя</label>
+              {{ form.first_name }}
+              {{ form.first_name.errors }}
+            </div>
+            <div>
+              <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Фамилия</label>
+              {{ form.last_name }}
+              {{ form.last_name.errors }}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Логин</label>
+              {{ form.username }}
+              {{ form.username.errors }}
+            </div>
+            <div>
+              <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              {{ form.email }}
+              {{ form.email.errors }}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+              {{ form.password1 }}
+              {{ form.password1.errors }}
+            </div>
+            <div>
+              <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Повторите пароль</label>
+              {{ form.password2 }}
+              {{ form.password2.errors }}
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-dark shadow-lg shadow-orange-200 transition">Зарегистрироваться</button>
+        </form>
+        <div class="mt-6 text-center text-sm text-gray-500">
+          Уже есть аккаунт? <a href="{% url 'login' %}" class="text-brand font-semibold hover:underline">Войти</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

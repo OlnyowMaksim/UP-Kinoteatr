@@ -1,0 +1,82 @@
+:root {
+    --brand: #ff9500;
+    --brand-dark: #e68600;
+    --brand-light: #fff4e0;
+}
+
+.text-brand { color: var(--brand); }
+.bg-brand { background: var(--brand); }
+.bg-brand:hover { background: var(--brand-dark); }
+.border-brand { border-color: var(--brand); }
+
+.auth-hero {
+    background: radial-gradient(circle at 20% 20%, rgba(255, 149, 0, 0.18), transparent 38%),
+                radial-gradient(circle at 80% 0%, rgba(255, 200, 120, 0.25), transparent 32%),
+                linear-gradient(135deg, #fffaf3, #fef7ef 45%, #fff);
+}
+
+.glass-card {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.input-elevated {
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.auth-badge {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Унифицируем поля авторизации/регистрации без серых подложек */
+input, select, textarea {
+    background: #fff;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+}
+
+/* Внятные рамки и отступы для форм логина/регистрации */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 14px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.15);
+}
+
+/* Мягкие ссылки в шапке логина/регистрации */
+.link-soft {
+    color: #ff9f1c;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+.link-soft:hover {
+    color: #e68600;
+}
+
+/* Бейдж администратора */
+.admin-badge {
+    background: linear-gradient(135deg, #ff000f, #ff8c00);
+    color: #fff;
+    border: 1px solid #ff000f;
+    padding: 6px 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 10px 22px rgba(255, 0, 15, 0.38);
+}

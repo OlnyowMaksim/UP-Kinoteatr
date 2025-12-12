@@ -1,0 +1,47 @@
+{% extends 'theater/base.html' %}
+{% block content %}
+<div class="bg-gray-50 min-h-[calc(100vh-4rem)]">
+  <div class="container mx-auto px-6 py-12">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-gradient-to-br from-white to-[#fff4e0] rounded-3xl shadow-xl border border-orange-100 px-10 py-12">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <p class="text-sm text-gray-500">Вход в аккаунт</p>
+            <h1 class="text-3xl font-semibold text-gray-900">Добро пожаловать в Kinochrome</h1>
+          </div>
+        </div>
+
+        <form method="post" class="space-y-5">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="bg-red-50 text-red-700 px-4 py-3 rounded border border-red-100">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div>
+            <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Email или логин</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+          </div>
+
+          <div>
+            <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+          </div>
+
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-dark shadow-lg shadow-orange-200 transition">Войти</button>
+        </form>
+        <div class="mt-6 text-center text-sm text-gray-500">
+          Нет аккаунта? <a href="{% url 'register' %}" class="text-brand font-semibold hover:underline">Регистрация</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
