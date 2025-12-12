@@ -26,22 +26,3 @@ Python 3
 Django
 HTML / CSS
 SQLite
-Архитектура проекта
-UP-Kinoteatr
-│
-├── cinema_project/ # общие настройки Django
-│ ├── settings.py # конфигурация
-│ ├── urls.py # маршруты
-│ └── wsgi.py # точка входа сервера
-│
-├── theater/ # основное приложение
-│ ├── models.py # модели фильмов, залов, сеансов
-│ ├── views.py # логика отображения
-│ ├── serializers.py # API сериализация
-│ ├── urls.py # маршруты API
-│ └── admin.py # админка
-│
-├── templates/ # HTML-шаблоны
-├── static/ # CSS / JS / изображения
-├── manage.py # точка входа
-└── requirements.txt # зависимости
